@@ -1,0 +1,32 @@
+import heapq
+
+def find_most_used_classroom(n, classes):
+    classes.sort(key=lambda x: (x[0], -x[2]))
+    
+    heap = []
+    room_count = [0] * n
+    
+    for c in classes:
+        start, end, size = c
+        
+        while heap and heap[0][0] <= start:
+            heapq.heappop(heap)
+        
+        if len(heap) < n:
+            room_id = len(heap)
+            heapq.heappush(heap, (end, room_id))
+            room_count[room_id] += 1
+        else:
+            earliest_end, room_id = heapq.heappop(heap)
+            new_end = earliest_end + (end - start)
+            heapq.heappush(heap, (new_end, room_id))
+            room_count[room_id] += 1
+    
+    max_classes = max(room_count)
+    for i in range(n):
+        if room_count[i] == max_classes:
+            return i
+
+n = 2
+classes = [[0, 10, 50], [1, 5, 20], [2, 7, 30], [3, 4, 10]]
+print(find_most_used_classroom(n, classes))  # Output: 0
