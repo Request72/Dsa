@@ -1,0 +1,74 @@
+import heapq
+import sys
+
+def modify_road_times(n, roads, source, destination, target):
+    graph = {i: [] for i in range(n)}
+    for u, v, w in roads:
+        graph[u].append((v, w))
+        graph[v].append((u, w))
+    
+    def dijkstra(start):
+        dist = [float('inf')] * n
+        dist[start] = 0
+        heap = [(0, start)]
+        while heap:
+            d, u = heapq.heappop(heap)
+            if d > dist[u]:
+                continue
+            for v, w in graph[u]:
+                if w != -1 and dist[u] + w < dist[v]:
+                    dist[v] = dist[u] + w
+                    heapq.heappush(heap, (dist[v], v))
+        return dist
+    
+    dist_from_source = dijkstra(source)
+    dist_from_destination = dijkstra(destination)
+    
+    if dist_from_source[destination] == target:
+        return [[u, v, w if w != -1 else 1] for u, v, w in roads]
+    
+    min_edge = float('inf')
+    for u, v, w in roads:
+        if w == -1:
+            min_edge = min(min_edge, 1)
+    
+    def valid_config(time):
+        temp_graph = {i: [] for i in range(n)}
+        for u, v, w in roads:
+            if w == -1:
+                w = time
+            temp_graph[u].append((v, w))
+            temp_graph[v].append((u, w))
+        
+        def temp_dijkstra(start):
+            dist = [float('inf')] * n
+            dist[start] = 0
+            heap = [(0, start)]
+            while heap:
+                d, u = heapq.heappop(heap)
+                if d > dist[u]:
+                    continue
+                for v, w in temp_graph[u]:
+                    if dist[u] + w < dist[v]:
+                        dist[v] = dist[u] + w
+                        heapq.heappush(heap, (dist[v], v))
+            return dist
+        
+        return temp_dijkstra(source)[destination] == target
+    
+    low, high = 1, 2 * 10**9
+    while low <= high:
+        mid = (low + high) // 2
+        if valid_config(mid):
+            result = [[u, v, mid if w == -1 else w] for u, v, w in roads]
+            return result
+        low = mid + 1
+    
+    return []
+
+n = 5
+roads = [[4, 1, -1], [2, 0, -1], [0, 3, -1], [4, 3, -1]]
+source = 0
+destination = 1
+target = 5
+print(modify_road_times(n, roads, source, destination, target))
