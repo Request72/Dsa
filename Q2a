@@ -1,0 +1,99 @@
+import tkinter as tk
+from tkinter import messagebox
+import re
+
+class BasicCalculatorGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Basic Calculator")
+        self.root.geometry("400x200")
+        
+        self.input_field = tk.Entry(root, width=50)
+        self.input_field.pack(pady=10)
+
+        self.calculate_button = tk.Button(root, text="Calculate", command=self.calculate)
+        self.calculate_button.pack(pady=10)
+
+        self.result_label = tk.Label(root, text="Result: ", font=("Arial", 14))
+        self.result_label.pack(pady=10)
+    
+    def calculate(self):
+        expression = self.input_field.get().strip()
+        try:
+            result = self.evaluate_expression(expression)
+            self.result_label.config(text=f"Result: {result}")
+        except Exception as e:
+            messagebox.showerror("Error", "Invalid expression")
+    
+    def evaluate_expression(self, expression):
+        def precedence(op):
+            if op == '+' or op == '-':
+                return 1
+            if op == '*' or op == '/':
+                return 2
+            return 0
+
+        def apply_operation(operators, values):
+            op = operators.pop()
+            right = values.pop()
+            left = values.pop()
+            if op == '+':
+                values.append(left + right)
+            elif op == '-':
+                values.append(left - right)
+            elif op == '*':
+                values.append(left * right)
+            elif op == '/':
+                if right == 0:
+                    raise ValueError("Cannot divide by zero")
+                values.append(left / right)
+
+        def is_number(c):
+            return c.isdigit() or c == '.'
+
+        operators = []
+        values = []
+        i = 0
+
+        while i < len(expression):
+            if expression[i] == ' ':
+                i += 1
+                continue
+
+            if expression[i] == '(':
+                operators.append(expression[i])
+            elif is_number(expression[i]):
+                val = 0
+                while i < len(expression) and (expression[i].isdigit() or expression[i] == '.'):
+                    if expression[i] == '.':
+                        j = i + 1
+                        decimal_place = 1
+                        while j < len(expression) and expression[j].isdigit():
+                            decimal_place *= 10
+                            val += int(expression[j]) / decimal_place
+                            j += 1
+                        i = j
+                    else:
+                        val = (val * 10) + int(expression[i])
+                        i += 1
+                values.append(val)
+                i -= 1
+            elif expression[i] == ')':
+                while len(operators) != 0 and operators[-1] != '(':
+                    apply_operation(operators, values)
+                operators.pop()
+            else:
+                while (len(operators) != 0 and precedence(operators[-1]) >= precedence(expression[i])):
+                    apply_operation(operators, values)
+                operators.append(expression[i])
+            i += 1
+
+        while len(operators) != 0:
+            apply_operation(operators, values)
+
+        return values[-1]
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    calculator = BasicCalculatorGUI(root)
+    root.mainloop()
